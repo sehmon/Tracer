@@ -14,7 +14,7 @@ const detector = new DeviceDetector({
 
 let users = {};
 users['SERVER'] = {
-  x: 200, y: 200, screenName: "HOME",
+  x: 200, y: 200, screenName: "Toronto, CA",
 }
 
 app.use(express.static('public'));
