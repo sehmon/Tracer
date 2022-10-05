@@ -6,6 +6,9 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 
 let users = {};
+users['SERVER'] = {
+  x: 200, y: 200, screenName: "HOME",
+}
 
 app.use(express.static('public'));
 
@@ -16,8 +19,13 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected');
   var id = "server-id" + Math.random().toString(16).slice(2)
-  users[id] = { x: 0, y: 0 };
-  console.log(socket.conn.remoteAddress);
+  var screenName = "default_screenname";
+  var ip = socket.conn.remoteAddress.split(":")[3];
+  fetch(`http://ip-api.com/json/${ip}`)
+    .then((response) => response.json())
+    .then((data) => screenName=`${data.city}, ${data.region} - ${data.query}`);
+
+  users[id] = { x: 0, y: 0 , name: screenName};
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -26,7 +34,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('mouseUpdate', (mouseData) => {
-    users[id] = { x: mouseData.x, y: mouseData.y }
+    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName}
     io.emit("userUpdate", users);
   })
 });

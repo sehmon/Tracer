@@ -5,7 +5,6 @@ var id;
 users = {}
 
 socket.on("userUpdate", (u) => {
-  console.log(users);
   users=u
 })
 
@@ -16,7 +15,6 @@ function setup() {
 function draw() {
   if (pmouseX !== mouseX || pmouseY !== mouseY) {
     socket.emit('mouseUpdate', {
-      name: id,
       x: mouseX,
       y: mouseY,
     })
@@ -24,7 +22,12 @@ function draw() {
   background(255, 255, 255);
 
   for (let u in users) {
-    text(u, users[u].x, users[u].y);
+    text(users[u].screenName, users[u].x, users[u].y);
+    if(u == 'SERVER') {
+      continue
+    }
+
+    line(users['SERVER'].x, users['SERVER'].y, users[u].x, users[u].y)
   }
 
 }
