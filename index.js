@@ -4,6 +4,13 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const DeviceDetector = require('node-device-detector');
+const detector = new DeviceDetector({
+  clientIndexes: true,
+  deviceIndexes: true,
+  deviceAliasCode: false,
+});
+
 
 let users = {};
 users['SERVER'] = {
@@ -34,7 +41,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('mouseUpdate', (mouseData) => {
-    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName}
+    const result = detector.detect(mouseData.userAgent);
+    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: result.device.type}
     io.emit("userUpdate", users);
   })
 });

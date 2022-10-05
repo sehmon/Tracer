@@ -1,4 +1,5 @@
 console.log("Testing!");
+let agent = navigator.userAgent;
 var socket = io();
 var id;
 
@@ -15,6 +16,7 @@ function setup() {
 function draw() {
   if (pmouseX !== mouseX || pmouseY !== mouseY) {
     socket.emit('mouseUpdate', {
+      userAgent: agent,
       x: mouseX,
       y: mouseY,
     })
@@ -27,6 +29,11 @@ function draw() {
       continue
     }
 
+    if(users[u].deviceType == 'smartphone') {
+      drawingContext.setLineDash([5, 15]);
+    } else {
+      drawingContext.setLineDash([]);
+    }
     line(users['SERVER'].x, users['SERVER'].y, users[u].x, users[u].y)
   }
 
