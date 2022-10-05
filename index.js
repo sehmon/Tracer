@@ -31,8 +31,8 @@ io.on('connection', (socket) => {
   fetch(`http://ip-api.com/json/${ip}`)
     .then((response) => response.json())
     .then((data) => screenName=`${data.city}, ${data.region} - ${data.query}`);
-
   users[id] = { x: 0, y: 0 , name: screenName};
+
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
