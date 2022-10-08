@@ -8,7 +8,7 @@ In the pursuit of frictionless technology we have abstracted away the underlying
 
 Through this project, the visitor experiences shared presence while replicating the uynderlying network topology that makes the experience possible. By interacting with the screen, the user explores emotional connection by modeling the physical connection of devices abstracted away.
 
-This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger (VIDEOPLACE). Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels real.
+This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger [VIDEOPLACE](https://www.youtube.com/watch?v=d4DUIeXSEpk). Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels real.
 
 
 ## Technical Overview
