@@ -11,7 +11,7 @@ const detector = new DeviceDetector({
   deviceAliasCode: false,
 });
 
-
+// Initialize list of users
 let users = {};
 users['SERVER'] = {
   x: 200, y: 200, screenName: "Toronto, CA - 159.223.132.92",
@@ -25,14 +25,28 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  // Initialize individual user's info
   var id = "server-id" + Math.random().toString(16).slice(2)
   var screenName = "default_screenname";
+  var deviceType = "desktop";
   var ip = socket.conn.remoteAddress.split(":")[3];
+
+  // Grab location information from IP Address
   fetch(`http://ip-api.com/json/${ip}`)
     .then((response) => response.json())
     .then((data) => screenName=`${data.city}, ${data.region} - ${data.query}`);
-  users[id] = { x: 0, y: 0 , name: screenName};
+  users[id] = { x: 0, y: 0 , name: screenName, deviceType: deviceType};
 
+  // On connection, try to get device user agent (for linetype)
+  socket.emit('getUserAgent');
+
+  // Receive the UserAgent and store it in the User Database
+  socket.on('setUserAgent', (agent) => {
+    const result = detector.detect(agent);
+    deviceType = result.device.type;
+    users[id].deviceType = deviceType
+  });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
@@ -40,9 +54,9 @@ io.on('connection', (socket) => {
     console.log(`${id} deleted`)
   });
 
+  // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
-    const result = detector.detect(mouseData.userAgent);
-    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: result.device.type}
+    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: deviceType}
     io.emit("userUpdate", users);
   })
 });
