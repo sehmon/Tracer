@@ -32,6 +32,21 @@ io.on('connection', (socket) => {
   var deviceType = "desktop";
   var ip = socket.conn.remoteAddress.split(":")[3];
 
+  const { spawn } = require('child_process');
+  const child = spawn('traceroute', [ip]);
+
+  // use child.stdout.setEncoding('utf8'); if you want text chunks
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => {
+  // data from standard output is here as buffers
+    console.log(chunk.toString());
+    console.log("New Buffer Chunk");
+  });
+
+  child.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+
   // Grab location information from IP Address
   fetch(`http://ip-api.com/json/${ip}`)
     .then((response) => response.json())
