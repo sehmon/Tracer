@@ -11,6 +11,7 @@ const detector = new DeviceDetector({
   deviceAliasCode: false,
 });
 
+
 // Initialize list of users
 let users = {};
 users['SERVER'] = {
@@ -31,16 +32,22 @@ io.on('connection', (socket) => {
   var screenName = "default_screenname";
   var deviceType = "desktop";
   var ip = socket.conn.remoteAddress.split(":")[3];
+  var path = [];
 
   const { spawn } = require('child_process');
   const child = spawn('traceroute', [ip]);
+  const regex = /(\S+)\s+\((\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)\)/g;
 
   // use child.stdout.setEncoding('utf8'); if you want text chunks
   child.stdout.setEncoding('utf8');
   child.stdout.on('data', (chunk) => {
   // data from standard output is here as buffers
-    console.log(chunk.toString());
-    console.log("New Buffer Chunk");
+    for (const match of chunk.toString().matchAll(regex)) {
+      const serverName = match[1];
+      const ipAddress = match[2];
+      console.log(`Server Name: ${serverName}, IP Address: ${ipAddress}`);
+      path.push(`Server Name: ${serverName}, IP Address: ${ipAddress}`);
+    }
   });
 
   child.on('close', (code) => {
@@ -51,7 +58,7 @@ io.on('connection', (socket) => {
   fetch(`http://ip-api.com/json/${ip}`)
     .then((response) => response.json())
     .then((data) => screenName=`${data.city}, ${data.region} - ${data.query}`);
-  users[id] = { x: 0, y: 0 , name: screenName, deviceType: deviceType};
+  users[id] = { x: 0, y: 0 , name: screenName, deviceType: deviceType, path: path};
 
   // On connection, try to get device user agent (for linetype)
   socket.emit('getUserAgent');
@@ -71,7 +78,7 @@ io.on('connection', (socket) => {
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
-    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: deviceType}
+    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: deviceType, path: path}
     io.emit("userUpdate", users);
   })
 });

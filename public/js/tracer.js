@@ -41,6 +41,10 @@ function draw() {
       continue
     }
 
+    for(let i=0; i<users[u].path.length; i++){
+      text(users[u].path[i], users[u].x + 10, users[u].y + ((i+1)*12))
+    }
+
     // Draw lines between users and server
     stroke(180);
     if(users[u].deviceType == 'smartphone') {
