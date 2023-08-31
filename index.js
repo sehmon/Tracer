@@ -1,10 +1,14 @@
-// Required imports
+// Start Express server
 const express = require('express');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
+
+// Start socket.io server
 const { Server } = require("socket.io");
 const io = new Server(server);
+
+// Device detector (for linetypes
 const DeviceDetector = require('node-device-detector');
 const detector = new DeviceDetector({
   clientIndexes: true,
@@ -12,93 +16,28 @@ const detector = new DeviceDetector({
   deviceAliasCode: false,
 });
 
-// Graph Node class definitions
-class GraphNode {
-  id = "server-id" + Math.random().toString(16).slice(2);
-  name = "Default Name";
-  ip = "0.0.0.0";
-  type = "default-type";
-  children = []; // List of IP Children this node is parent of
+// Local imports
+const GraphNode = require('./GraphNode');
+const NetworkGraph = require('./NetworkGraph');
+const { getHostIPAddress } = require('./utils');
 
-  constructor(name, ip, type){
-    this.name = name;
-    this.ip = ip;
-    this.type = type;
-  }
+app.use(express.static('public'));
 
-  addChild(n) {
-    this.children.push(n.ip);
-  }
-
-  removeChild(n) {
-    this.children.splice(this.children.indexOf(n.ip), 1)
-  }
-}
-
-class NetworkGraph {
-  root = new GraphNode("Root Node", "1.1.1.1", "type-root");
-  node_graph = {}
-
-  constructor() {
-    this.node_graph[this.root.ip] = this.root;
-  }
-
-  addNode(node) {
-    this.node_graph[node.ip] = node;
-  }
-
-  addIntermediateNode(a, b, new_node) {
-    // TODO: Insert node between a and b, with a being the grandparent and
-    // b being the child
-    //
-    // Graph struture should look like:
-    // a --> new_node --> b
-    // and should remove b as a direct child of a
-    // console.log("Adding Intermediate Node");
-    a.addChild(new_node);
-    a.removeChild(b);
-    new_node.addChild(b);
-  }
-}
-
-// Get IPAddress of the Server
-function getHostIPAddress() {
-  const { exec } = require('child_process');
-  return new Promise((resolve, reject) => {
-    exec('hostname -I', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`error: ${error.message}`);
-        reject(error);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        reject(new Error(stderr));
-        return;
-      }
-
-      resolve(stdout.trim().split(" ")[0]);
-    });
-  });
-}
-
-// Initialize list of users
+// Initialize list of users (for socket.io)
 let users = {};
 users['SERVER'] = {
   x: 200, y: 200, screenName: "Toronto, CA - 159.223.132.92",
 }
 
+// Set up Network Graph and add server as root
 let server_graph = new NetworkGraph();
-// Initialize the server root node once we get back the IP Address
-getHostIPAddress().then(ipAddress => {
-  console.log(`Server IP Address: ${ipAddress}`);
+getHostIPAddress().then(ipAddress => { // Get Server's IPAddress
   users['SERVER'].screenName = `New York City - ${ipAddress}`;
   server_graph.root = new GraphNode("Server", ipAddress, 'root-server-node');
 }).catch(error => {
   console.error(`Failed to get Server IP address: ${error.message}`);
 });
 
-app.use(express.static('public'));
 
 // Server Routes
 app.get('/', (req, res) => {
@@ -106,12 +45,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/test-graph', (req, res) => {
-  res.send(server_graph);
-});
-
-app.get('/add-node', (req, res) => {
-  let n = new GraphNode("New User", "4.4.4.4", "type-user");
-  server_graph.addNode(n);
   res.send(server_graph);
 });
 
@@ -125,7 +58,7 @@ io.on('connection', (socket) => {
   var ip = socket.conn.remoteAddress.split(":")[3];
   var path = [];
 
-  // Create graph node for user
+  // Create graph node for the new user
   let user_node = new GraphNode(screenName, ip, deviceType);
   let prev = server_graph.root;
   server_graph.addNode(user_node);
@@ -133,23 +66,31 @@ io.on('connection', (socket) => {
 
   // Iterate through traceroute command
   const { spawn } = require('child_process');
-  const child = spawn('traceroute', [ip]);
-  const regex = /(\S+)\s+\((\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)\)/g;
+  const child = spawn('traceroute', ['-q 1', ip]);
+  // Following regex gets each servername/ip pair from the traceroute output
+  const regex = /(\S+)\s+\((\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)\)|(\*)/g;
+
 
   child.stdout.setEncoding('utf8');
   child.stdout.on('data', (chunk) => {
-  // data from standard output is here as buffers
     for (const match of chunk.toString().matchAll(regex)) {
-      const serverName = match[1];
-      const ipAddress = match[2];
-      // console.log(`Server Name: ${serverName}, IP Address: ${ipAddress}`);
+      if (match[3]) { // If the third capture group (asterisk) is matched
+        console.log(`Asterisk: ${match[3]}`);
+      } else {
+        const serverName = match[1];
+        const ipAddress = match[2];
 
-      let n = new GraphNode(serverName, ipAddress, 'intermediate-node');
-      server_graph.addNode(n);
-      server_graph.addIntermediateNode(prev, user_node, n);
-      prev = n;
+        if(ipAddress == user_node.ip){
+          continue;
+        }
 
-      path.push(`${serverName} (${ipAddress})`);
+        let n = new GraphNode(serverName, ipAddress, 'intermediate-node');
+        server_graph.addNode(n);
+        server_graph.addIntermediateNode(prev, user_node, n);
+        prev = n;
+
+        path.push(`${serverName} (${ipAddress})`);
+      }
     }
   });
 
