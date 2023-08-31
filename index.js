@@ -61,12 +61,42 @@ class NetworkGraph {
   }
 }
 
+// Get IPAddress of the Server
+function getHostIPAddress() {
+  const { exec } = require('child_process');
+  return new Promise((resolve, reject) => {
+    exec('hostname -I', (error, stdout, stderr) => {
+      if (error) {
+        console.error(`error: ${error.message}`);
+        reject(error);
+        return;
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        reject(new Error(stderr));
+        return;
+      }
+
+      resolve(stdout.trim().split(" ")[0]);
+    });
+  });
+}
+
 // Initialize list of users
 let users = {};
 users['SERVER'] = {
   x: 200, y: 200, screenName: "Toronto, CA - 159.223.132.92",
 }
+
 let server_graph = new NetworkGraph();
+// Initialize the server root node once we get back the IP Address
+getHostIPAddress().then(ipAddress => {
+  console.log(`Server IP Address: ${ipAddress}`);
+  users['SERVER'].screenName = `New York City - ${ipAddress}`;
+  server_graph.root = new GraphNode("Server", ipAddress, 'root-server-node');
+}).catch(error => {
+  console.error(`Failed to get Server IP address: ${error.message}`);
+});
 
 app.use(express.static('public'));
 
@@ -100,7 +130,6 @@ io.on('connection', (socket) => {
   let prev = server_graph.root;
   server_graph.addNode(user_node);
   prev.addChild(user_node);
-  console.log(prev);
 
   // Iterate through traceroute command
   const { spawn } = require('child_process');
@@ -120,7 +149,7 @@ io.on('connection', (socket) => {
       server_graph.addIntermediateNode(prev, user_node, n);
       prev = n;
 
-      path.push(`Server Name: ${serverName}, IP Address: ${ipAddress}`);
+      path.push(`${serverName} (${ipAddress})`);
     }
   });
 
