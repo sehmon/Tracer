@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
 
   // Initialize individual user's info
   var id = "server-id" + Math.random().toString(16).slice(2)
-  var screenName = "default_screenname";
+  var screenName = "new_user";
   var deviceType = "desktop";
   var ip = socket.conn.remoteAddress.split(":")[3];
   var path = [];
@@ -75,7 +75,7 @@ io.on('connection', (socket) => {
   child.stdout.on('data', (chunk) => {
     for (const match of chunk.toString().matchAll(regex)) {
       if (match[3]) { // If the third capture group (asterisk) is matched
-        console.log(`Asterisk: ${match[3]}`);
+        // console.log(`Asterisk: ${match[3]}`);
       } else {
         const serverName = match[1];
         const ipAddress = match[2];
@@ -85,7 +85,6 @@ io.on('connection', (socket) => {
         }
 
         let n = new GraphNode(serverName, ipAddress, 'intermediate-node');
-        server_graph.addNode(n);
         server_graph.addIntermediateNode(prev, user_node, n);
         prev = n;
 

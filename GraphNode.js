@@ -12,7 +12,7 @@ class GraphNode {
   }
 
   addChild(n) {
-    this.children.push(n.ip);
+    this.children.indexOf() == -1 ? this.children.push(n.ip) : console.log(`Node with IP ${n.ip} already child of parent ${this.ip}`);
   }
 
   removeChild(n) {
