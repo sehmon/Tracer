@@ -4,6 +4,7 @@ var socket = io();
 var id;
 
 users = {}
+server_graph = {}
 
 // Socket.io Events
 
@@ -18,6 +19,10 @@ socket.on("newUserEvent", (n) => {
 socket.on("getUserAgent", () => {
   socket.emit('setUserAgent', agent);
 });
+
+socket.on("serverGraphUpdate", (s) => {
+  server_graph=s;
+})
 
 // p5.js Setup and Draw
 function setup() {

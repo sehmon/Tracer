@@ -48,6 +48,10 @@ app.get('/test-graph', (req, res) => {
   res.send(server_graph);
 });
 
+app.get('/visualize', (req, res) => {
+  res.sendFile(__dirname + '/graph.html');
+});
+
 io.on('connection', (socket) => {
   console.log('a user connected');
 
@@ -123,6 +127,7 @@ io.on('connection', (socket) => {
   socket.on('mouseUpdate', (mouseData) => {
     users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: deviceType, path: path}
     io.emit("userUpdate", users);
+    io.emit("serverGraphUpdate", server_graph);
   })
 });
 
