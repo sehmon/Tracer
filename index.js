@@ -25,6 +25,7 @@ app.use(express.static('public'));
 
 // Initialize list of users (for socket.io)
 let users = {};
+let user_count = 0;
 users['SERVER'] = {
   x: 200, y: 200, screenName: "Toronto, CA - 159.223.132.92",
 }
@@ -54,6 +55,7 @@ app.get('/visualize', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+  user_count += 1;
 
   // Initialize individual user's info
   var id = "server-id" + Math.random().toString(16).slice(2)
@@ -120,13 +122,14 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('user disconnected');
     delete users[id];
+    user_count -= 1;
     console.log(`${id} deleted`)
   });
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
     users[id] = { x: mouseData.x, y: mouseData.y, screenWidth: mouseData.screenWidth, screenHeight: mouseData.screenHeight, screenName: screenName, deviceType: deviceType, path: path}
-    io.emit("userUpdate", users);
+    io.emit("userUpdate", { 'users': users, 'count': user_count } );
     io.emit("serverGraphUpdate", server_graph);
   })
 });

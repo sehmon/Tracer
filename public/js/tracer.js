@@ -4,12 +4,15 @@ var socket = io();
 var id;
 
 users = {}
+user_count = 0
 server_graph = {}
 
 // Socket.io Events
 
 socket.on("userUpdate", (u) => {
-  users=u
+  users=u.users;
+  user_count = u.count;
+  console.log(user_count);
 })
 
 socket.on("newUserEvent", (n) => {
@@ -29,6 +32,15 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 
+function drawUI() {
+  noStroke();
+  fill(0);
+  let count_string = user_count == 1 ? 
+    `${user_count} current user` :
+    `${user_count} current users`;
+  text(count_string, 20, 20);
+}
+
 function draw() {
   if (pmouseX !== mouseX || pmouseY !== mouseY) {
     socket.emit('mouseUpdate', {
@@ -39,6 +51,8 @@ function draw() {
     })
   }
   background(230);
+
+  drawUI();
 
   for (let u in users) {
     // If the server, just draw in the middle of the screen
