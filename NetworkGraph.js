@@ -30,7 +30,7 @@ class NetworkGraph {
     // Graph struture should look like:
     // a --> new_node --> b
     // and should remove b as a direct child of a
-    console.log(`Adding node: ${new_node.name} between (A): ${a.name} and (B): ${b.name}`);
+    // console.log(`Adding node: ${new_node.name} between (A): ${a.name} and (B): ${b.name}`);
     a.addChild(new_node);
     a.removeChild(b);
     new_node.addChild(b);

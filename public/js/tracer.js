@@ -34,20 +34,35 @@ function draw() {
     socket.emit('mouseUpdate', {
       x: mouseX,
       y: mouseY,
+      screenWidth: windowWidth,
+      screenHeight: windowHeight,
     })
   }
   background(230);
 
-  // Draw text based on Users array
   for (let u in users) {
-    stroke(120);
-    text(users[u].screenName, users[u].x, users[u].y);
+    // If the server, just draw in the middle of the screen
+    // proceed to the rest of the nodes in the user graph
+    fill(0);
     if(u == 'SERVER') {
+      noStroke();
+      text(users[u].screenName, windowWidth/2, windowHeight/2);
       continue
     }
 
+    // Calculate the user's screen positional ratio to place them correctly on
+    // the screen. This may not work as intended but worth a try.
+    userXRatio = users[u].x / users[u].screenWidth;
+    userYRatio = users[u].y / users[u].screenHeight;
+    x_pos = userXRatio * windowWidth;
+    y_pos = userYRatio * windowHeight;
+
+    // Draw each user and list their IP path below their name
+    noStroke();
+    text(users[u].screenName, x_pos, y_pos);
     for(let i=0; i<users[u].path.length; i++){
-      text(users[u].path[i], users[u].x + 10, users[u].y + ((i+1)*12))
+      fill(140);
+      text(users[u].path[i], x_pos + 10, y_pos + ((i+1)*12))
     }
 
     // Draw lines between users and server
@@ -57,6 +72,6 @@ function draw() {
     } else {
       drawingContext.setLineDash([]);
     }
-    line(users['SERVER'].x, users['SERVER'].y, users[u].x, users[u].y)
+    line(windowWidth/2, windowHeight/2, x_pos, y_pos)
   }
 }

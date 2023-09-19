@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
-    users[id] = { x: mouseData.x, y: mouseData.y , screenName: screenName, deviceType: deviceType, path: path}
+    users[id] = { x: mouseData.x, y: mouseData.y, screenWidth: mouseData.screenWidth, screenHeight: mouseData.screenHeight, screenName: screenName, deviceType: deviceType, path: path}
     io.emit("userUpdate", users);
     io.emit("serverGraphUpdate", server_graph);
   })
