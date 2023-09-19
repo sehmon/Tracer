@@ -325,13 +325,17 @@ function draw() {
   for(let node in display_graph) {
     if(node == user_ip) {
       stroke(200);
-      ellipse(mouseX, mouseY, 40);
+      fill(128, 0, 0);
+      ellipse(mouseX, mouseY, 20);
       noStroke();
+      fill(0);
       text(node, mouseX, mouseY);
     } else {
       stroke(200);
-      ellipse(display_graph[node].x, display_graph[node].y, 40);
+      fill(255);
+      ellipse(display_graph[node].x, display_graph[node].y, 20);
       noStroke();
+      fill(0);
       text(node, display_graph[node].x, display_graph[node].y);
     }
   }
