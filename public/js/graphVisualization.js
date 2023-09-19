@@ -1,4 +1,3 @@
-
 const testGraph = {
   "root": {
     "id": "server-ide62032a65c892",
@@ -276,8 +275,7 @@ socket.on("serverGraphUpdate", (s) => {
 
 let display_graph = {}
 let server_graph = {}
-
-
+let user_ip = "62.144.239.139"
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -300,18 +298,41 @@ function setup() {
 }
 
 function draw() {
-  // draw nodes
-  for(let node in display_graph) {
-    ellipse(display_graph[node].x, display_graph[node].y, 40);
-    text(node, display_graph[node].x, display_graph[node].y);
-  }
+  background(230);
 
   // draw edges
   for(let node in display_graph) {
     for(let child of display_graph[node].children) {
       if(display_graph[child]) {
-        line(display_graph[node].x, display_graph[node].y, display_graph[child].x, display_graph[child].y);
+        if(child == user_ip) {
+          stroke(200);
+          line(display_graph[node].x,
+                display_graph[node].y,
+                mouseX,
+                mouseY);
+        } else {
+          stroke(200);
+          line(display_graph[node].x,
+                display_graph[node].y,
+                display_graph[child].x,
+                display_graph[child].y);
+        }
       }
+    }
+  }
+
+  // draw nodes
+  for(let node in display_graph) {
+    if(node == user_ip) {
+      stroke(200);
+      ellipse(mouseX, mouseY, 40);
+      noStroke();
+      text(node, mouseX, mouseY);
+    } else {
+      stroke(200);
+      ellipse(display_graph[node].x, display_graph[node].y, 40);
+      noStroke();
+      text(node, display_graph[node].x, display_graph[node].y);
     }
   }
 }
