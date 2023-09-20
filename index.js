@@ -116,6 +116,7 @@ io.on('connection', (socket) => {
   socket.on('setUserAgent', (agent) => {
     const result = detector.detect(agent);
     deviceType = result.device.type;
+    console.log(deviceType);
     users[id].deviceType = deviceType
   });
 
