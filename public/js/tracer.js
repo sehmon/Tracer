@@ -1,44 +1,59 @@
-// Initialize Server + Socket
+const projectText = `In the pursuit of frictionless technology we have abstracted away the underlying infrastructure powering our world. Instant messaging, video calling, online gaming, and realtime streaming all introduce interaction models that attempt to replicate an idea of shared presence similar to how its experienced in the real world. <br><br>
+
+Through this project, the visitor experiences shared presence while replicating the underlying network topology that makes the experience possible. By interacting with the screen, the user explores ideas of connection through modeling the physical connection of digital devices.<br><br>
+
+This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger's VIDEOPLACE. Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels tangible.`
+
+const INFO_DIV_STYLES = {
+  background: 'white',
+  textAlign: 'center',
+  padding: '20px',
+  border: '1px solid #666',
+  width: '80vw',
+  maxWidth: '600px',
+  height: 'auto',
+  maxHeight: '80vh',
+  overflowY: 'auto',
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)'
+};
+
+const USER_UPDATE_INTERVAL = 50;
+
+class UserManager {
+  constructor() {
+    this.users = {};
+    this.userCount = 0;
+    this.serverGraph = {};
+    this.userID = null;
+  }
+
+  updateUser(data) {
+    this.users = data.users;
+    this.userCount = data.count;
+  }
+}
+
+let um = new UserManager();
+let lastUpdate = 0;
+let socket = io();
 let agent = navigator.userAgent;
-var socket = io();
-var id;
 
-let users = {}
-let user_count = 0
-let server_graph = {}
-let user_id = null;
+function setupSocketEvents(socket) {
+  socket.on("connect", () => console.log("socket connected!"));
 
-// ----------------------- Socket.io Events -----------------------
-socket.on("connect", () => {
-  console.log("socket connected!");
-});
+  socket.on("userUpdate", data => um.updateUser(data));
 
-socket.on("userUpdate", (u) => {
-  users=u.users;
-  user_count = u.count;
-})
+  socket.on("newUserEvent", () => console.log("New User Connected!"));
 
-// When a new user connects to the server
-socket.on("newUserEvent", (n) => {
-  console.log("New User Conneted!");
-})
+  socket.on("getUserAgent", () => socket.emit('setUserAgent', navigator.userAgent));
 
-// Gets the device user agent to set the linetype
-// (mobile --> dashed)
-// (desktop --> solid)
-socket.on("getUserAgent", () => {
-  socket.emit('setUserAgent', agent);
-});
+  socket.on("yourID", id => { um.userID = id });
 
-socket.on("yourID", (id) => {
-  user_id = id;
-  console.log(`Your ID: ${user_id}`);
-});
-
-// When a user's position is updated, send the new server graph
-socket.on("serverGraphUpdate", (s) => {
-  server_graph=s;
-})
+  socket.on("serverGraphUpdate", data => um.serverGraph = data);
+}
 
 // ----------------------- p5 helper functions -----------------------
 
@@ -61,26 +76,14 @@ function sendMouseUpdateToServer() {
 
 let infoBtn, infoDiv, infoTitle, infoP, infoLink;
 function setupHTMLElements() {
-  createCanvas(windowWidth, windowHeight);
-
   infoBtn = createButton("?");
   infoBtn.position(windowWidth - 40, 20);
   infoBtn.mousePressed(togglePopup);
 
   infoDiv = createDiv();
-  infoDiv.style('background', 'white');
-  infoDiv.style('text-align', 'center');
-  infoDiv.style('padding', '20px');
-  infoDiv.style('border', '1px solid #666');
-  infoDiv.style('width', '80vw');
-  infoDiv.style('max-width', '600px');
-  infoDiv.style('height', 'auto');
-  infoDiv.style('max-height', '80vh');
-  infoDiv.style('overflow-y', 'auto');  // Changed from 'scroll' to make scrollbar appear only when needed
-  infoDiv.style('position', 'fixed');
-  infoDiv.style('top', '50%');  // Add these to center the div
-  infoDiv.style('left', '50%');
-  infoDiv.style('transform', 'translate(-50%, -50%)');
+  for(style in INFO_DIV_STYLES) {
+    infoDiv.style(style, INFO_DIV_STYLES[style]);
+  }
   infoDiv.hide();
 
 
@@ -96,11 +99,11 @@ function setupHTMLElements() {
 function drawUI() {
   noStroke();
   fill(0);
-  let count_string = user_count == 1 ? 
-    `${user_count} active user` :
-    `${user_count} active users`;
+  let countString = um.userCount == 1 ? 
+    `${um.userCount} active user` :
+    `${um.userCount} active users`;
   textAlign(RIGHT);
-  text(count_string, windowWidth-20, windowHeight-20);
+  text(countString, windowWidth-20, windowHeight-20);
   textAlign(LEFT);
   // textSize(32);
   // text("Connections", 20, 40);
@@ -108,68 +111,60 @@ function drawUI() {
 }
 
 function drawServerGraphAndUsers() {
-  for (let u in users) {
+  for (let u in um.users) {
     // If the server, just draw in the middle of the screen
     // proceed to the rest of the nodes in the user graph
     fill(0);
     if(u == 'SERVER') {
       noStroke();
       textAlign(CENTER);
-      text(users[u].screenName, windowWidth/2, windowHeight/2);
+      text(um.users[u].screenName, windowWidth/2, windowHeight/2);
       continue
     }
 
     // Calculate the user's screen positional ratio to place them correctly on
     // the screen. This may not work as intended but worth a try.
-    userXRatio = users[u].x / users[u].screenWidth;
-    userYRatio = users[u].y / users[u].screenHeight;
-    x_pos = userXRatio * windowWidth;
-    y_pos = userYRatio * windowHeight;
+    userXRatio = um.users[u].x / um.users[u].screenWidth;
+    userYRatio = um.users[u].y / um.users[u].screenHeight;
+    xPos = userXRatio * windowWidth;
+    yPos = userYRatio * windowHeight;
 
     // Draw lines between users and server
     stroke(180);
-    linetype = users[u].deviceType == 'smartphone' ? [5, 15] : []; // dashed line if smartphone
+    linetype = um.users[u].deviceType == 'smartphone' ? [5, 15] : []; // dashed line if smartphone
     drawingContext.setLineDash(linetype);
-    line(windowWidth/2, windowHeight/2, x_pos, y_pos)
+    line(windowWidth/2, windowHeight/2, xPos, yPos)
 
     // Draw each user and list their IP path below their name
     noStroke();
     textAlign(LEFT);
-    text(users[u].screenName, x_pos, y_pos);
-    // TODO: pre-build multi-line string to keep for loop out of draw()
+    text(um.users[u].screenName, xPos, yPos);
   }
   
-  if(user_id && users[user_id]) {
-    console.log("User exists");
-
+  if(um.userID && um.users[um.userID]) {
     // List the user's IP path at the bottom of the screen
-    for(let i=0; i<users[user_id].path.length; i++){
+    for(let i=0; i<um.users[um.userID].path.length; i++){
       fill(140);
-      text(users[user_id].path[i], 20, windowHeight - (12 * (1+i)) - 20);
+      text(um.users[um.userID].path[i], 0, windowHeight - (12 * (1+i)) - 20);
     }
+    fill(40);
+    text("Your Path to Server:", 0, windowHeight - (12 * (1+um.users[um.userID].path.length)) - 20)
   }
 
 }
 
 // ----------------------- Set up p5 sketch -----------------------
 
-let projectText = `In the pursuit of frictionless technology we have abstracted away the underlying infrastructure powering our world. Instant messaging, video calling, online gaming, and realtime streaming all introduce interaction models that attempt to replicate an idea of shared presence similar to how its experienced in the real world. <br><br>
-
-Through this project, the visitor experiences shared presence while replicating the underlying network topology that makes the experience possible. By interacting with the screen, the user explores ideas of connection through modeling the physical connection of digital devices.<br><br>
-
-This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger's VIDEOPLACE. Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels tangible.`
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
   setupHTMLElements();
+  setupSocketEvents(socket);
   sendMouseUpdateToServer();
 }
 
-let lastUpdate = 0;
-
 function draw() {
   const now = Date.now();
-  if(now - lastUpdate > 50) {
+  if(now - lastUpdate > USER_UPDATE_INTERVAL) {
     sendMouseUpdateToServer();
     lastUpdate = now;
   }
