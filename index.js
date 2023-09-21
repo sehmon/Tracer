@@ -57,12 +57,16 @@ io.on('connection', (socket) => {
   console.log('a user connected');
   user_count += 1;
 
+
   // Initialize individual user's info
   var id = "server-id" + Math.random().toString(16).slice(2)
   var screenName = "new_user";
   var deviceType = "desktop";
   var ip = socket.conn.remoteAddress.split(":")[3];
   var path = [];
+
+  // send ip back to user
+  socket.emit('yourID', id);
 
   // Create graph node for the new user
   let user_node = new GraphNode(screenName, ip, deviceType);

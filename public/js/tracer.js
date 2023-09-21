@@ -6,9 +6,13 @@ var id;
 let users = {}
 let user_count = 0
 let server_graph = {}
-let user_ip = null;
+let user_id = null;
 
 // ----------------------- Socket.io Events -----------------------
+socket.on("connect", () => {
+  console.log("socket connected!");
+});
+
 socket.on("userUpdate", (u) => {
   users=u.users;
   user_count = u.count;
@@ -24,6 +28,11 @@ socket.on("newUserEvent", (n) => {
 // (desktop --> solid)
 socket.on("getUserAgent", () => {
   socket.emit('setUserAgent', agent);
+});
+
+socket.on("yourID", (id) => {
+  user_id = id;
+  console.log(`Your ID: ${user_id}`);
 });
 
 // When a user's position is updated, send the new server graph
@@ -59,12 +68,21 @@ function setupHTMLElements() {
   infoBtn.mousePressed(togglePopup);
 
   infoDiv = createDiv();
-  infoDiv.position(width / 2 - 150, height / 2 - 100);
   infoDiv.style('background', 'white');
   infoDiv.style('text-align', 'center');
   infoDiv.style('padding', '20px');
-  infoDiv.style('border', '1px solid black');
+  infoDiv.style('border', '1px solid #666');
+  infoDiv.style('width', '80vw');
+  infoDiv.style('max-width', '600px');
+  infoDiv.style('height', 'auto');
+  infoDiv.style('max-height', '80vh');
+  infoDiv.style('overflow-y', 'auto');  // Changed from 'scroll' to make scrollbar appear only when needed
+  infoDiv.style('position', 'fixed');
+  infoDiv.style('top', '50%');  // Add these to center the div
+  infoDiv.style('left', '50%');
+  infoDiv.style('transform', 'translate(-50%, -50%)');
   infoDiv.hide();
+
 
   infoTitle = createElement('h1', 'Connections');
   infoTitle.parent(infoDiv);
@@ -84,8 +102,8 @@ function drawUI() {
   textAlign(RIGHT);
   text(count_string, windowWidth-20, windowHeight-20);
   textAlign(LEFT);
-  textSize(32);
-  text("Connections", 20, 40);
+  // textSize(32);
+  // text("Connections", 20, 40);
   textSize(12);
 }
 
@@ -119,13 +137,18 @@ function drawServerGraphAndUsers() {
     textAlign(LEFT);
     text(users[u].screenName, x_pos, y_pos);
     // TODO: pre-build multi-line string to keep for loop out of draw()
-    /**
-    for(let i=0; i<users[u].path.length; i++){
-      fill(140);
-      text(users[u].path[i], x_pos + 10, y_pos + ((i+1)*12))
-    }
-    **/
   }
+  
+  if(user_id && users[user_id]) {
+    console.log("User exists");
+
+    // List the user's IP path at the bottom of the screen
+    for(let i=0; i<users[user_id].path.length; i++){
+      fill(140);
+      text(users[user_id].path[i], 20, windowHeight - (12 * (1+i)) - 20);
+    }
+  }
+
 }
 
 // ----------------------- Set up p5 sketch -----------------------
@@ -134,7 +157,7 @@ let projectText = `In the pursuit of frictionless technology we have abstracted 
 
 Through this project, the visitor experiences shared presence while replicating the underlying network topology that makes the experience possible. By interacting with the screen, the user explores ideas of connection through modeling the physical connection of digital devices.<br><br>
 
-This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger VIDEOPLACE. Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels tangible.`
+This project takes inspiration from various interactive web experiences, specifically the work of pioneers in this space like Myron Kruger's VIDEOPLACE. Similar to Myron, this project attempts to explore how technology can be a medium for connection by replicating a user's identity and modeling shared space in a way that feels tangible.`
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -142,9 +165,13 @@ function setup() {
   sendMouseUpdateToServer();
 }
 
+let lastUpdate = 0;
+
 function draw() {
-  if (pmouseX !== mouseX || pmouseY !== mouseY && frameCount % 2 == 0) {
+  const now = Date.now();
+  if(now - lastUpdate > 50) {
     sendMouseUpdateToServer();
+    lastUpdate = now;
   }
 
   background(230);
