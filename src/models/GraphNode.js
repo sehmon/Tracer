@@ -1,3 +1,7 @@
+/**
+ * Represents a GraphNode in a network.
+ * @class
+ */
 class GraphNode {
   id = "server-id" + Math.random().toString(16).slice(2);
   name = "Default Name";
