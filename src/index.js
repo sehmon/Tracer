@@ -58,8 +58,8 @@ io.on('connection', async (socket) => {
   }
 
   try {
-    const ipLocationInfo = await getIPLocation(userIP);
-    const screenName=`${ipLocationInfo.city}, ${ipLocationInfo.country} - ${ipLocationInfo.query}`;
+    const { city, country, query } = await getIPLocation(userIP);
+    const screenName=`${city}, ${country} - ${query}`;
     userManager.updateUser(id, { screenName: screenName });
   } catch (error) {
     console.error("Error during IP Geolocation:", error);
@@ -81,12 +81,9 @@ io.on('connection', async (socket) => {
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
-    userManager.updateUser(id, {
-      x: mouseData.x,
-      y: mouseData.y,
-      screenWidth: mouseData.screenWidth,
-      screenHeight: mouseData.screenHeight,
-    });
+    const { x, y, screenWidth, screenHeight } = mouseData
+    userManager.updateUser(id, { x, y, screenWidth, screenHeight });
+
     io.emit("userUpdate", { 'users': userManager.users, 'count': userManager.userCount } );
     io.emit("serverGraphUpdate", networkGraphManager.networkGraph);
   })
