@@ -1,82 +1,67 @@
-// Start Express server
 const express = require('express');
-const app = express();
 const http = require('http');
-const server = http.createServer(app);
-
-// Start socket.io server
+const path = require('path');
 const { Server } = require("socket.io");
-const io = new Server(server);
-
-// Device detector (for linetypes
 const DeviceDetector = require('node-device-detector');
+
+const GraphNode = require('./models/GraphNode');
+const NetworkGraph = require('./models/NetworkGraph');
+const getHostIPAddress = require('./utils/getHostIPAddress');
+const UserManager = require('./managers/UserManager');
+const NetworkGraphManager = require('./managers/NetworkGraphManager');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 const detector = new DeviceDetector({
   clientIndexes: true,
   deviceIndexes: true,
   deviceAliasCode: false,
 });
+const userManager = new UserManager();
 
-// Local imports
-const GraphNode = require('./GraphNode');
-const NetworkGraph = require('./NetworkGraph');
-const { getHostIPAddress } = require('./utils');
-
-app.use(express.static('public'));
-
-// Initialize list of users (for socket.io)
-let users = {};
-let user_count = 0;
-users['SERVER'] = {
-  x: 200, y: 200, screenName: "Toronto, CA - 159.223.132.92",
-}
 
 // Set up Network Graph and add server as root
 let server_graph = new NetworkGraph();
-getHostIPAddress().then(ipAddress => { // Get Server's IPAddress
-  users['SERVER'].screenName = `New York City - ${ipAddress}`;
-  server_graph.root = new GraphNode("Server", ipAddress, 'root-server-node');
-}).catch(error => {
-  console.error(`Failed to get Server IP address: ${error.message}`);
-});
-
+getHostIPAddress()
+  .then(ipAddress => {
+    // This is bad, create a function
+    userManager.users['SERVER'].screenName = `New York City - ${ipAddress}`; 
+    server_graph.root = new GraphNode("Server", ipAddress, 'root-server-node')})
+  .catch(error => {console.error(`Failed to get Server IP address: ${error.message}`)});
 
 // Server Routes
+app.use(express.static('public'));
+
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(path.join(__dirname, '../views/index.html'));
 });
-
-app.get('/test-graph', (req, res) => {
-  res.send(server_graph);
-});
-
 app.get('/visualize', (req, res) => {
-  res.sendFile(__dirname + '/graph.html');
+  res.sendFile(path.join(__dirname, '../views/graph.html'));
 });
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  user_count += 1;
+app.get('/test-graph', (req, res) => { res.send(server_graph)});
 
-
+io.on('connection', async (socket) => {
   // Initialize individual user's info
-  var id = "server-id" + Math.random().toString(16).slice(2)
-  var screenName = "new_user";
-  var deviceType = "desktop";
-  var ip = socket.conn.remoteAddress.split(":")[3];
-  var path = [];
+  const id = userManager.addUser();
+  const userIP = userManager.setIP(id, socket);
 
-  // send ip back to user
+  let screenName, deviceType;
+  let path = [];
+
+  // send id back to user
   socket.emit('yourID', id);
 
   // Create graph node for the new user
-  let user_node = new GraphNode(screenName, ip, deviceType);
+  let user_node = new GraphNode(screenName, userIP, deviceType);
   let prev = server_graph.root;
   server_graph.addNode(user_node);
   prev.addChild(user_node);
 
   // Iterate through traceroute command
   const { spawn } = require('child_process');
-  const child = spawn('traceroute', ['-q 1', ip]);
+  const child = spawn('traceroute', ['-q 1', userIP]);
   // Following regex gets each servername/ip pair from the traceroute output
   const regex = /(\S+)\s+\((\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)\)|(\*)/g;
 
@@ -108,10 +93,12 @@ io.on('connection', (socket) => {
   });
 
   // Grab location information from IP Address
-  fetch(`http://ip-api.com/json/${ip}`)
+  fetch(`http://ip-api.com/json/${userIP}`)
     .then((response) => response.json())
     .then((data) => screenName=`${data.city}, ${data.region} - ${data.query}`);
-  users[id] = { x: 0, y: 0 , name: screenName, deviceType: deviceType, path: path};
+  userManager.updateUser(id, 
+    { x: 0, y: 0 , name: screenName, deviceType: deviceType, path: path}
+  );
 
   // On connection, try to get device user agent (for linetype)
   socket.emit('getUserAgent');
@@ -121,20 +108,21 @@ io.on('connection', (socket) => {
     const result = detector.detect(agent);
     deviceType = result.device.type;
     console.log(deviceType);
-    users[id].deviceType = deviceType
+    userManager.setDeviceType(id, deviceType);
   });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
-    delete users[id];
-    user_count -= 1;
+    userManager.removeUser(id);
     console.log(`${id} deleted`)
   });
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
-    users[id] = { x: mouseData.x, y: mouseData.y, screenWidth: mouseData.screenWidth, screenHeight: mouseData.screenHeight, screenName: screenName, deviceType: deviceType, path: path}
-    io.emit("userUpdate", { 'users': users, 'count': user_count } );
+    userManager.updateUser(id, 
+      { x: mouseData.x, y: mouseData.y, screenWidth: mouseData.screenWidth, screenHeight: mouseData.screenHeight, screenName: screenName, deviceType: deviceType, path: path}
+    );
+    io.emit("userUpdate", { 'users': userManager.users, 'count': userManager.userCount } );
     io.emit("serverGraphUpdate", server_graph);
   })
 });

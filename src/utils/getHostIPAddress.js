@@ -20,6 +20,4 @@ function getHostIPAddress() {
   });
 }
 
-module.exports = {
-  getHostIPAddress
-};
+module.exports = getHostIPAddress;
