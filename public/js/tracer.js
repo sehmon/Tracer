@@ -40,6 +40,9 @@ let um = new UserManager();
 let lastUpdate = 0;
 let socket = io();
 let agent = navigator.userAgent;
+let smallestScreenDimension;
+let intermediateRings = 6;
+let ringPadding = 40;
 
 function setupSocketEvents(socket) {
   socket.on("connect", () => console.log("socket connected!"));
@@ -111,6 +114,12 @@ function drawUI() {
 }
 
 function drawServerGraphAndUsers() {
+  for(let i=1; i < intermediateRings+1; i++) {
+    noFill();
+    stroke(200);
+    drawingContext.setLineDash([]);
+    circle(width/2, height/2, (i*(smallestScreenDimension/intermediateRings)));
+  }
   for (let u in um.users) {
     // If the server, just draw in the middle of the screen
     // proceed to the rest of the nodes in the user graph
@@ -160,6 +169,9 @@ function setup() {
   setupHTMLElements();
   setupSocketEvents(socket);
   sendMouseUpdateToServer();
+
+  smallestScreenDimension = min(windowWidth, windowHeight);
+  smallestScreenDimension -= ringPadding;
 }
 
 function draw() {

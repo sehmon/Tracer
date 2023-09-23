@@ -14,10 +14,12 @@ class NetworkGraph {
     // If the node already exists in the graph, just merge it's info
     // in this case, it'd just be merging the children array
     if(node.ip in this.node_graph){ 
+      // console.log(`${node.ip} already in graph!`);
       let child_list = this.node_graph[node.ip].children
       child_list.concat(node.children) // Should only be a single child
       this.node_graph[node.ip].children = [...new Set(child_list)]
     } else {
+      // console.log(`Adding ${node.ip} to graph`);
       this.node_graph[node.ip] = node;
     }
 
