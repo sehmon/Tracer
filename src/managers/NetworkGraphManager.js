@@ -17,9 +17,16 @@ class NetworkGraphManager {
       // Create the new GraphNode and prep for the traceroute
       let userNode = new GraphNode(user.screenName, user.ip, user.deviceType);
       let path = [];
+      let hop = 0;
       let prev = this.networkGraph.root;
-      path.push(`${this.networkGraph.root.name} (${this.networkGraph.root.ip})`);
+      let { name, ip } = this.networkGraph.root;
+      path.push({
+        name,
+        ip,
+        hop,
+      });
       this.networkGraph.addNode(userNode);
+      this.networkGraph.addNodeUserPair(user.userID, ip);
       prev.addChild(userNode);
 
       const child = spawn('traceroute', ['-q', '1', user.ip]);
@@ -34,6 +41,7 @@ class NetworkGraphManager {
       child.stdout.setEncoding('utf8');
       child.stdout.on('data', (chunk) => {
         for (const match of chunk.toString().matchAll(regex)) {
+          hop += 1;
           if (match[3]) { // If the third capture group (asterisk) is matched
             // console.log(`Asterisk: ${match[3]}`);
           } else {
@@ -46,21 +54,33 @@ class NetworkGraphManager {
 
             let n = new GraphNode(serverName, ipAddress, 'intermediate-node');
             this.networkGraph.addIntermediateNode(prev, userNode, n);
+            this.networkGraph.addNodeUserPair(user.userID, ipAddress);
             prev = n;
 
-            path.push(`${serverName} (${ipAddress})`);
+            path.push({
+              name: serverName,
+              ip: ipAddress,
+              hop,
+            });
           }
         }
       });
 
       child.on('close', (code) => {
         if (code == 0) {
+          this.networkGraph.printUserNodeMap();
           resolve(path)
         } else {
           reject(new Error(`child process exited with code ${code}`));
         }
       });
     });
+  }
+
+  cleanNetworkGraph(user) {
+    this.networkGraph.removeUserFromNetworkGraph(user);
+    this.networkGraph.removeNodeUserPairs(user);
+    this.networkGraph.printUserNodeMap();
   }
 }
 

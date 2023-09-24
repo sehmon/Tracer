@@ -12,6 +12,7 @@ class UserManager {
     this.users[id] = {
       screenName: "new_user",
       deviceType: "desktop",
+      userID: id,
       path: [],
     };
     this.userCount += 1;

@@ -154,7 +154,8 @@ function drawServerGraphAndUsers() {
     // List the user's IP path at the bottom of the screen
     for(let i=0; i<um.users[um.userID].path.length; i++){
       fill(140);
-      text(um.users[um.userID].path[i], 0, windowHeight - (12 * (1+i)) - 20);
+      let { name, ip } = um.users[um.userID].path[i];
+      text(`${name} (${ip})`, 0, windowHeight - (12 * (1+i)) - 20);
     }
     fill(40);
     text("Your Path to Server:", 0, windowHeight - (12 * (1+um.users[um.userID].path.length)) - 20)

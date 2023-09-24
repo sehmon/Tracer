@@ -74,10 +74,6 @@ io.on('connection', async (socket) => {
     userManager.setDeviceType(id, deviceType);
   });
 
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-    userManager.removeUser(id);
-  });
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
@@ -87,6 +83,12 @@ io.on('connection', async (socket) => {
     io.emit("userUpdate", { 'users': userManager.users, 'count': userManager.userCount } );
     io.emit("serverGraphUpdate", networkGraphManager.networkGraph);
   })
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+    networkGraphManager.cleanNetworkGraph(userManager.getUser(id));
+    userManager.removeUser(id);
+  });
 });
 
 server.listen(PORT, () => {
