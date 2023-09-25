@@ -41,7 +41,9 @@ let lastUpdate = 0;
 let socket = io();
 let agent = navigator.userAgent;
 let smallestScreenDimension;
-let intermediateRings = 6;
+let largestScreenDimension;
+let minIntermediateRings = 6;
+let maxIntermediateRings = 12;
 let ringPadding = 40;
 
 function setupSocketEvents(socket) {
@@ -114,11 +116,11 @@ function drawUI() {
 }
 
 function drawServerGraphAndUsers() {
-  for(let i=1; i < intermediateRings+1; i++) {
+  for(let i=1; i < maxIntermediateRings+1; i++) {
     noFill();
     stroke(200);
     drawingContext.setLineDash([]);
-    circle(width/2, height/2, (i*(smallestScreenDimension/intermediateRings)));
+    circle(width/2, height/2, (i*(largestScreenDimension/maxIntermediateRings)));
   }
   for (let u in um.users) {
     // If the server, just draw in the middle of the screen
@@ -177,6 +179,8 @@ function setup() {
 
   smallestScreenDimension = min(windowWidth, windowHeight);
   smallestScreenDimension -= ringPadding;
+
+  largestScreenDimension = max(windowWidth, windowHeight);
 }
 
 function draw() {
