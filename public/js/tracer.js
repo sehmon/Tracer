@@ -153,8 +153,12 @@ function drawServerGraphAndUsers() {
   if(um.userID && um.users[um.userID]) {
     // List the user's IP path at the bottom of the screen
     for(let i=0; i<um.users[um.userID].path.length; i++){
-      fill(140);
       let { name, ip } = um.users[um.userID].path[i];
+      if(um.serverGraph.userNodeMap[ip].length > 1) {
+        fill(100, 0, 0);
+      } else {
+        fill(140);
+      }
       text(`${name} (${ip})`, 0, windowHeight - (12 * (1+i)) - 20);
     }
     fill(40);
@@ -185,4 +189,8 @@ function draw() {
   background(230);
   drawUI();
   drawServerGraphAndUsers()
+}
+
+function mousePressed() {
+  console.log(um.serverGraph);
 }
