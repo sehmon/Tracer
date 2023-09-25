@@ -154,7 +154,7 @@ function drawServerGraphAndUsers() {
     // List the user's IP path at the bottom of the screen
     for(let i=0; i<um.users[um.userID].path.length; i++){
       let { name, ip } = um.users[um.userID].path[i];
-      if(um.serverGraph.userNodeMap[ip].length > 1) {
+      if(um.serverGraph.userNodeMap[ip].connectedUsers.length > 1) {
         fill(100, 0, 0);
       } else {
         fill(140);

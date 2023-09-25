@@ -1,4 +1,5 @@
 const GraphNode = require('./GraphNode');
+const getIPLocation = require('../utils/getIPLocation');
 
 class NetworkGraph {
   root = null;
@@ -43,14 +44,19 @@ class NetworkGraph {
   // With this information, we should be able to decode what
   // intermediate nodes should be drawn on the frontend, and
   // what servers connect two users together.
-  addNodeUserPair(serverID, nodeIP) {
-    // console.log(`Adding pair ${serverID}-${nodeIP} to userNodeMap`);
+  //
+  // Only geo-locate if an entry in the userNodeMap has more
+  // than one child.
+  async addNodeUserPair(serverID, nodeIP) {
     if(nodeIP in this.userNodeMap) {
-      // console.log("Node already exists, adding to list");
-      this.userNodeMap[nodeIP].push(serverID);
+      this.userNodeMap[nodeIP].connectedUsers.push(serverID);
+      if(!this.userNodeMap[nodeIP].hasOwnProperty('regionInfo')) {
+        const regionInfo = await getIPLocation(nodeIP);
+        this.userNodeMap[nodeIP] = { ...this.userNodeMap[nodeIP], ...regionInfo }
+      }
     } else {
-      // console.log("New Node, creating list and adding user ID");
-      this.userNodeMap[nodeIP] = [serverID];
+      const nodeMapEntry = { connectedUsers: [serverID] }
+      this.userNodeMap[nodeIP] = nodeMapEntry;
     }
   }
 
@@ -68,11 +74,11 @@ class NetworkGraph {
     for(let i=0; i<user.path.length; i++) {
       let { ip } = user.path[i];
       console.log(`Removing ${user.userID} from NodeMapIP: ${ip}`);
-      if(this.userNodeMap[ip].length == 1) {
+      if(this.userNodeMap[ip].connectedUsers.length == 1) {
         delete this.userNodeMap[ip];
       } else {
-        const index = this.userNodeMap[ip].indexOf(user.userID);
-        const removedUser = this.userNodeMap[ip].splice(index, 1);
+        const index = this.userNodeMap[ip].connectedUsers.indexOf(user.userID);
+        const removedUser = this.userNodeMap[ip].connectedUsers.splice(index, 1);
       }
     }
   }
