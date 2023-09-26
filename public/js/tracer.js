@@ -144,12 +144,24 @@ function drawServerGraphAndUsers() {
     stroke(180);
     linetype = um.users[u].deviceType == 'smartphone' ? [5, 15] : []; // dashed line if smartphone
     drawingContext.setLineDash(linetype);
-    line(windowWidth/2, windowHeight/2, xPos, yPos)
+    if(u == um.userID) {
+      fill(100, 0, 0);
+      line(windowWidth/2, windowHeight/2, mouseX, mouseY)
+    } else {
+      fill(0);
+      line(windowWidth/2, windowHeight/2, xPos, yPos)
+    }
 
     // Draw each user and list their IP path below their name
     noStroke();
     textAlign(LEFT);
-    text(um.users[u].screenName, xPos, yPos);
+    if(u == um.userID) {
+      fill(100, 0, 0);
+      text(um.users[u].screenName, mouseX, mouseY);
+    } else {
+      fill(0);
+      text(um.users[u].screenName, xPos, yPos);
+    }
   }
   
   if(um.userID && um.users[um.userID]) {
