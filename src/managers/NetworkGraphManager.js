@@ -80,7 +80,7 @@ class NetworkGraphManager {
   cleanNetworkGraph(user) {
     this.networkGraph.removeUserFromNetworkGraph(user);
     this.networkGraph.removeNodeUserPairs(user);
-    this.networkGraph.printUserNodeMap();
+    // this.networkGraph.printUserNodeMap();
   }
 }
 

@@ -116,12 +116,16 @@ function drawUI() {
 }
 
 function drawServerGraphAndUsers() {
+  // I don't like the circles anymore
+  /**
   for(let i=1; i < maxIntermediateRings+1; i++) {
     noFill();
     stroke(200);
     drawingContext.setLineDash([]);
     circle(width/2, height/2, (i*(largestScreenDimension/maxIntermediateRings)));
   }
+  **/
+
   for (let u in um.users) {
     // If the server, just draw in the middle of the screen
     // proceed to the rest of the nodes in the user graph

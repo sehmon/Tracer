@@ -70,10 +70,8 @@ class NetworkGraph {
   // Takes a user, and iterates through their path to clean
   // the server IDs from the userNodeMap
   removeNodeUserPairs(user) {
-    console.log(user);
     for(let i=0; i<user.path.length; i++) {
       let { ip } = user.path[i];
-      console.log(`Removing ${user.userID} from NodeMapIP: ${ip}`);
       if(this.userNodeMap[ip].connectedUsers.length == 1) {
         delete this.userNodeMap[ip];
       } else {
