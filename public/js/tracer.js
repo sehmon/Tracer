@@ -40,11 +40,6 @@ let um = new UserManager();
 let lastUpdate = 0;
 let socket = io();
 let agent = navigator.userAgent;
-let smallestScreenDimension;
-let largestScreenDimension;
-let minIntermediateRings = 6;
-let maxIntermediateRings = 12;
-let ringPadding = 40;
 
 function setupSocketEvents(socket) {
   socket.on("connect", () => console.log("socket connected!"));
@@ -110,22 +105,9 @@ function drawUI() {
   textAlign(RIGHT);
   text(countString, windowWidth-20, windowHeight-20);
   textAlign(LEFT);
-  // textSize(32);
-  // text("Connections", 20, 40);
-  textSize(12);
 }
 
 function drawServerGraphAndUsers() {
-  // I don't like the circles anymore
-  /**
-  for(let i=1; i < maxIntermediateRings+1; i++) {
-    noFill();
-    stroke(200);
-    drawingContext.setLineDash([]);
-    circle(width/2, height/2, (i*(largestScreenDimension/maxIntermediateRings)));
-  }
-  **/
-
   for (let u in um.users) {
     // If the server, just draw in the middle of the screen
     // proceed to the rest of the nodes in the user graph
@@ -172,7 +154,7 @@ function drawServerGraphAndUsers() {
     // List the user's IP path at the bottom of the screen
     for(let i=0; i<um.users[um.userID].path.length; i++){
       let { name, ip } = um.users[um.userID].path[i];
-      if(um.serverGraph.userNodeMap[ip].connectedUsers.length > 1) {
+      if(um.serverGraph && um.serverGraph.userNodeMap && um.serverGraph.userNodeMap[ip].connectedUsers.length > 1) {
         fill(100, 0, 0);
       } else {
         fill(140);
@@ -192,11 +174,6 @@ function setup() {
   setupHTMLElements();
   setupSocketEvents(socket);
   sendMouseUpdateToServer();
-
-  smallestScreenDimension = min(windowWidth, windowHeight);
-  smallestScreenDimension -= ringPadding;
-
-  largestScreenDimension = max(windowWidth, windowHeight);
 }
 
 function draw() {
@@ -211,6 +188,3 @@ function draw() {
   drawServerGraphAndUsers()
 }
 
-function mousePressed() {
-  console.log(um.serverGraph);
-}
