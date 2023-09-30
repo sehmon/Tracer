@@ -34,6 +34,10 @@ class UserManager {
     this.users = data.users;
     this.userCount = data.count;
   }
+
+  serverGraphIsEmpty() {
+    return Object.keys(this.serverGraph).length === 0;
+  }
 }
 
 let um = new UserManager();
@@ -108,6 +112,7 @@ function drawUI() {
 }
 
 function drawServerGraphAndUsers() {
+  textSize(12);
   for (let u in um.users) {
     // If the server, just draw in the middle of the screen
     // proceed to the rest of the nodes in the user graph
@@ -143,7 +148,8 @@ function drawServerGraphAndUsers() {
     textAlign(LEFT);
     if(u == um.userID) {
       fill(100, 0, 0);
-      text(um.users[u].screenName, mouseX, mouseY);
+      const displayName = um.users[u].screenName == "new_user" ? "Loading..." : um.users[u].screenName;
+      text(displayName, mouseX, mouseY);
     } else {
       fill(0);
       text(um.users[u].screenName, xPos, yPos);
@@ -164,7 +170,11 @@ function drawServerGraphAndUsers() {
     fill(40);
     text("Your Path to Server:", 0, windowHeight - (12 * (1+um.users[um.userID].path.length)) - 20)
   }
+}
 
+function showLoadingScreen() {
+  textSize(24);
+  text("Loading...", windowWidth/2, windowHeight/2);
 }
 
 // ----------------------- Set up p5 sketch -----------------------
@@ -177,14 +187,20 @@ function setup() {
 }
 
 function draw() {
-  const now = Date.now();
-  if(now - lastUpdate > USER_UPDATE_INTERVAL) {
-    sendMouseUpdateToServer();
-    lastUpdate = now;
-  }
-
   background(230);
-  drawUI();
-  drawServerGraphAndUsers()
+
+  if(um.serverGraphIsEmpty()) {
+    console.log("Loading");
+    showLoadingScreen();
+  } else {
+    const now = Date.now();
+    if(now - lastUpdate > USER_UPDATE_INTERVAL) {
+      sendMouseUpdateToServer();
+      lastUpdate = now;
+    }
+
+    drawUI();
+    drawServerGraphAndUsers()
+  }
 }
 

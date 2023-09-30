@@ -74,6 +74,8 @@ io.on('connection', async (socket) => {
     userManager.setDeviceType(id, deviceType);
   });
 
+  // Kick off the server graph updating
+  io.emit("serverGraphUpdate", networkGraphManager.networkGraph);
 
   // When receiveing a Mouse Update from a device, update position and broadcast to the rest of connected users
   socket.on('mouseUpdate', (mouseData) => {
