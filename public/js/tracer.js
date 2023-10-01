@@ -173,6 +173,7 @@ function drawServerGraphAndUsers() {
 }
 
 function showLoadingScreen() {
+  textAlign(CENTER);
   textSize(24);
   text("Loading...", windowWidth/2, windowHeight/2);
 }
