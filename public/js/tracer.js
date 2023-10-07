@@ -158,10 +158,12 @@ function drawServerGraphAndUsers() {
   
   if(um.userID && um.users[um.userID]) {
     // List the user's IP path at the bottom of the screen
+    let commonNode = "";
     for(let i=0; i<um.users[um.userID].path.length; i++){
       let { name, ip } = um.users[um.userID].path[i];
       if(um.serverGraph && um.serverGraph.userNodeMap && um.serverGraph.userNodeMap[ip].connectedUsers.length > 1) {
         fill(100, 0, 0);
+        commonNode = name;
       } else {
         fill(140);
       }
@@ -169,6 +171,9 @@ function drawServerGraphAndUsers() {
     }
     fill(40);
     text("Your Path to Server:", 0, windowHeight - (12 * (1+um.users[um.userID].path.length)) - 20)
+    if(commonNode) {
+      text(`Common Node (${commonNode})`, 20, 20);
+    }
   }
 }
 

@@ -68,7 +68,7 @@ class NetworkGraphManager {
 
       child.on('close', (code) => {
         if (code == 0) {
-          this.networkGraph.printUserNodeMap();
+          // this.networkGraph.printUserNodeMap();
           resolve(path)
         } else {
           reject(new Error(`child process exited with code ${code}`));
