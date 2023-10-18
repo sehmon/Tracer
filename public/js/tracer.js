@@ -28,3 +28,6 @@ function draw() {
   }
 }
 
+function mousePressed() {
+  sm.sendClickEvent();
+}

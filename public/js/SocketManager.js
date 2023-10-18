@@ -22,4 +22,13 @@ class SocketManager {
       screenHeight: windowHeight,
     });
   }
+
+  sendClickEvent() {
+    this.socket.emit('clickEvent', {
+      x: mouseX,
+      y: mouseY,
+      screenWidth: windowWidth,
+      screenHeight: windowHeight,
+    });
+  }
 }
