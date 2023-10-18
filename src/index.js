@@ -44,6 +44,30 @@ app.get('/test-graph', (req, res) => { res.send(networkGraphManager.networkGraph
 
 io.on('connection', async (socket) => {
   // Initialize individual user's info
+  //
+  // Handles all user interactions with the server. Each user is a client
+  // that's viewing the webpage, with a specific IPAddress and location.
+  //
+  // 1. Add a new user to the UserManager, get its ip, and send this back to
+  //    the client
+  //
+  // 2. Use the NetworkGraphManager to trace the user's ipAddress and update
+  //    the path variable
+  //
+  // 3. Geolocate the user's ip and update the userManager with the new
+  //    screenname derived from the city, country, and ip
+  //
+  // 4. Request the user's device type so we can draw the correct linetype
+  //
+  // 5. Send a 'serverGraphUpdate' and a 'userUpdate' with the new network
+  //    graph so all connected nodes are aware of the new user
+  //
+  // 6. Setup mouseUpdate listener to handle incoming cursor movement from the
+  //    user
+  //
+  // --------------------------------------------------------------------------
+  //
+
   const id = userManager.addUser();
   const userIP = userManager.setIP(id, socket);
 
