@@ -22,10 +22,15 @@ const networkGraphManager = new NetworkGraphManager();
 
 const PORT = process.env.PORT || 3000;
 
+const spacer = '------------------------------------------------------';
+
+console.log('Starting server, global variables initialized');
+console.log(spacer);
 
 // Set the server's IP Address
 getHostIPAddress()
   .then(ipAddress => {
+    console.log('Got host IPAddress, creating the "SERVER" user and initializing the network graph');
     userManager.updateUser('SERVER', { screenName: `New York City - ${ipAddress}`});
     networkGraphManager.initializeServerGraph(ipAddress);})
   .catch(error => {console.error(`Failed to get Server IP address: ${error.message}`)});
@@ -68,6 +73,7 @@ io.on('connection', async (socket) => {
   // --------------------------------------------------------------------------
   //
 
+  console.log('✨ New user connected!');
   const id = userManager.addUser();
   const userIP = userManager.setIP(id, socket);
 
@@ -75,6 +81,7 @@ io.on('connection', async (socket) => {
   socket.emit('yourID', id);
 
   try {
+    console.log(`Trying to trace path for user ${id} (${userIP})`);
     const path = await networkGraphManager.traceIPRoute(userManager.getUser(id));
     userManager.updateUser(id, { path: path });
   } catch (error) {
@@ -82,6 +89,7 @@ io.on('connection', async (socket) => {
   }
 
   try {
+    console.log(`Trying to get IP Location for user ${id} (${userIP})`);
     const { city, country, query } = await getIPLocation(userIP);
     const screenName=`${city}, ${country} - ${query}`;
     userManager.updateUser(id, { screenName: screenName });
@@ -111,7 +119,7 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    console.log(`User ${id} (${userIP}) has disconnected`);
     networkGraphManager.cleanNetworkGraph(userManager.getUser(id));
     userManager.removeUser(id);
   });

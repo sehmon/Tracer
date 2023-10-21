@@ -11,7 +11,8 @@ class UIManager {
   setupHTMLElements() {
     this.infoBtn = createButton("?");
     this.infoBtn.position(windowWidth - 40, 20);
-    this.infoBtn.mousePressed(this.togglePopup);
+    this.infoBtn.mousePressed(() => this.togglePopup());
+
 
     this.infoDiv = createDiv();
     for(let s in INFO_DIV_STYLES) {
@@ -29,6 +30,8 @@ class UIManager {
   }
 
   togglePopup() {
+    console.log('button clicked');
+    console.log(this.infoDiv);
     if (this.infoDiv.style('display') === 'none') {
       this.infoDiv.show();
     } else {
