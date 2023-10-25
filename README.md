@@ -27,4 +27,4 @@ connections relies on the following technologies:
 
 The next step for this project would be to process the network hops between each user and the server by running a `traceroute` command between ip addresses. Once each user's path is traced, use the data to display the path between the server and each user's device- simplifying the graph where devices share nodes. 
 
-once this is complete, i'd like to continue playing with concepts of space and conenction by having cursors interact with each other when they get close together. in addition, illustrating the idea of geographic distance in parallel with 'digital distance' would be very interesting to explore.
+once this is complete, i'd like to continue playing with concepts of space and conenction by having cursors interact with each other when they get close together. in addition, illustrating the idea of geographic distance in parallel with 'digital distance' would be very interesting to explore..
